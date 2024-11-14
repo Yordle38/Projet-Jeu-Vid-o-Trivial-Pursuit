@@ -1,1 +1,1 @@
-# Projet-Jeu-Vid-o-Trivial-Pursuit
+# Projet-Jeu-Video-Trivial-Pursuit
