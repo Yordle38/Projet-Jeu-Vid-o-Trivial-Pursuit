@@ -8,6 +8,8 @@ public class Game1 : Game
 {
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
+    
+    private Texture2D _texture;
 
     public Game1()
     {
@@ -28,6 +30,7 @@ public class Game1 : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
         // TODO: use this.Content to load your game content here
+        // Ligne qui load une image qui s'appelle player:  _texture = Content.Load<Texture2D>("player");
     }
 
     protected override void Update(GameTime gameTime)
@@ -44,8 +47,10 @@ public class Game1 : Game
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
-
         // TODO: Add your drawing code here
+        _spriteBatch.Begin();
+        // FAIRE UN _spriteBatch.Draw();
+        _spriteBatch.End();
 
         base.Draw(gameTime);
     }
