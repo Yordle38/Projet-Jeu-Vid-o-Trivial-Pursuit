@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Trivial_Pursuit.Jeu.Entites;
 
 namespace Trivial_Pursuit;
 
@@ -10,7 +11,8 @@ public class Game1 : Game
     private SpriteBatch _spriteBatch;
     
     private Texture2D _texture;
-
+    private Case _case1;
+    private Case _case2;
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
@@ -20,8 +22,10 @@ public class Game1 : Game
 
     protected override void Initialize()
     {
-        _graphics.PreferredBackBufferWidth = 950;
-        _graphics.PreferredBackBufferHeight = 640;
+        
+        // Réglage de la taille du tableau
+        _graphics.PreferredBackBufferWidth = 1600;
+        _graphics.PreferredBackBufferHeight = 900;
         _graphics.ApplyChanges();
         
         base.Initialize();
@@ -30,9 +34,15 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-
+        
         // TODO: use this.Content to load your game content here
-        // Ligne qui load une image qui s'appelle player:  _texture = Content.Load<Texture2D>("player");
+
+        // Load l'image des cases
+        _texture = Content.Load<Texture2D>("Images/case_3");
+        
+        _case1 = new Case(new Vector2(300,300), 200, Color.Red, false, _texture); // case de test, normalement affichage de plateau
+        _case2 = new Case(new Vector2(300,400), 200, Color.Aqua, false, _texture); // case de test, normalement affichage de plateau
+        
     }
 
     protected override void Update(GameTime gameTime)
@@ -51,7 +61,11 @@ public class Game1 : Game
         GraphicsDevice.Clear(Color.CornflowerBlue);
         // TODO: Add your drawing code here
         _spriteBatch.Begin();
-        // FAIRE UN _spriteBatch.Draw();
+        
+        // Draw les sprite
+        _case1.Draw(_spriteBatch);
+        _case2.Draw(_spriteBatch);
+        
         _spriteBatch.End();
 
         base.Draw(gameTime);

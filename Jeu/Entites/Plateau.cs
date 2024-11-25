@@ -7,4 +7,6 @@ public class Plateau
     private Case[] _cases;
     private Texture2D _background;
 
+    
+    
 }

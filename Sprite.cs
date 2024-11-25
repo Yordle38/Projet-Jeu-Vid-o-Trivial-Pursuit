@@ -5,7 +5,7 @@ using Keyboard = Microsoft.VisualBasic.Devices.Keyboard;
 
 public class Sprite
 {
-    private Texture2D _texture;
+    protected Texture2D _texture;
     protected Vector2 _position;
     private int _size = 100;
     private static readonly int _sizeMin = 10;
