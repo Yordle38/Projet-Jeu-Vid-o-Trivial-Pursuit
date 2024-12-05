@@ -7,3 +7,5 @@ app.manifest
 /.config/
 
 .idea
+.idea/
+/.idea
