@@ -17,7 +17,7 @@ public class Joueur : Sprite
 
     public Joueur(string nom,Texture2D texture, Vector2 position, Case caseD) : base(texture, position,80)
     {
-        _nom = nom;
+        _nom = nom; 
         _case = caseD; // case de départ
         _score = 0;
         _jokers = new List<Joker>();
