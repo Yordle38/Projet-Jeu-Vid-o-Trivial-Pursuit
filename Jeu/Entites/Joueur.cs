@@ -30,22 +30,22 @@ public class Joueur : Sprite
         {
             KeyboardState keyboardState = Keyboard.GetState();
 
-            if (keyboardState.IsKeyDown(Keys.Up))
+            if (keyboardState.IsKeyDown(Keys.Up)&& _position.Y>50)
             {
                 _position.Y -= 8; 
             }
 
-            if (keyboardState.IsKeyDown(Keys.Down))
+            if (keyboardState.IsKeyDown(Keys.Down) && _position.Y<850)
             {
                 _position.Y += 8;
             }
 
-            if (keyboardState.IsKeyDown(Keys.Right))
+            if (keyboardState.IsKeyDown(Keys.Right) && _position.X<1550)
             {
                 _position.X += 8;
             }
 
-            if (keyboardState.IsKeyDown(Keys.Left))
+            if (keyboardState.IsKeyDown(Keys.Left) && _position.X>50)
             {
                 _position.X -= 8;
             }
