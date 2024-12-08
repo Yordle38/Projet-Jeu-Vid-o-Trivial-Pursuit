@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Windows.Forms.VisualStyles;
+using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -13,14 +13,17 @@ public class Game1 : Game
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
     private SpriteFont _fontCase;
+    private KeyboardState ancienEtat;
     
     private Texture2D _textureCase;
     private Texture2D _backgroundPlateau;
     private List<Texture2D> _textureJoueurs;
-    private Case _case1;
-    private Case _case2;
     private Plateau _plateau;
     private List<Joueur> _joueurs;
+    private Partie _partie;
+    
+    //private double _tmpDerniereAction = 0; // Temps écoulé depuis la dernière action
+    //private const double _dureeAttente = 1.0; // attente en seconde avant la prochaine
 
     public Game1()
     {
@@ -39,6 +42,9 @@ public class Game1 : Game
         _graphics.PreferredBackBufferWidth = 1600;
         _graphics.PreferredBackBufferHeight = 900;
         _graphics.ApplyChanges();
+        
+        ancienEtat = Keyboard.GetState();
+
         
         base.Initialize();
     }
@@ -77,57 +83,62 @@ public class Game1 : Game
         Categorie musique = new Categorie("Musique", clrMusique);
         // Créé la liste des cases
         
-    var cases = new List<Case>
-    {
-        // Ligne du haut
-        new Case(new Vector2(30, 200), 130, TypeCase.VIDE, _textureCase),
-        new Case(new Vector2(160, 200), 130, TypeCase.VIDE, _textureCase),
-        new Case(new Vector2(290, 200), 130, TypeCase.QUESTION, _textureCase),
-        new Case(new Vector2(420, 200), 130, TypeCase.CHANCE, _textureCase, sport),
-        new Case(new Vector2(550, 200), 130, TypeCase.VIDE, _textureCase, zytho),
-        new Case(new Vector2(680, 200), 130, TypeCase.JOKER, _textureCase, nature),
-        new Case(new Vector2(810, 200), 130, TypeCase.QUESTION, _textureCase, jeuxVideo),
-        new Case(new Vector2(940, 200), 130, TypeCase.QUESTION, _textureCase, histoire),
-        new Case(new Vector2(1070, 200), 130, TypeCase.VIDE, _textureCase, musique),
+        var cases = new List<Case>
+        {
+            // Ligne du haut
+            new Case(new Vector2(30, 200), 130, TypeCase.VIDE, _textureCase),
+            new Case(new Vector2(160, 200), 130, TypeCase.VIDE, _textureCase),
+            new Case(new Vector2(290, 200), 130, TypeCase.QUESTION, _textureCase),
+            new Case(new Vector2(420, 200), 130, TypeCase.CHANCE, _textureCase, sport),
+            new Case(new Vector2(550, 200), 130, TypeCase.VIDE, _textureCase, zytho),
+            new Case(new Vector2(680, 200), 130, TypeCase.JOKER, _textureCase, nature),
+            new Case(new Vector2(810, 200), 130, TypeCase.QUESTION, _textureCase, jeuxVideo),
+            new Case(new Vector2(940, 200), 130, TypeCase.QUESTION, _textureCase, histoire),
+            new Case(new Vector2(1070, 200), 130, TypeCase.VIDE, _textureCase, musique),
 
-        // Colonne de gauche
-        new Case(new Vector2(30, 265), 130, TypeCase.VIDE, _textureCase),
-        new Case(new Vector2(30, 330), 130, TypeCase.VIDE, _textureCase),
-        new Case(new Vector2(30, 395), 130, TypeCase.QUESTION, _textureCase),
-        new Case(new Vector2(30, 460), 130, TypeCase.CHANCE, _textureCase),
-        new Case(new Vector2(30, 525), 130, TypeCase.VIDE, _textureCase),
-        new Case(new Vector2(30, 590), 130, TypeCase.JOKER, _textureCase),
-        new Case(new Vector2(30, 655), 130, TypeCase.QUESTION, _textureCase),
-        new Case(new Vector2(30, 720), 130, TypeCase.QUESTION, _textureCase),
+            // Colonne de droite
+            new Case(new Vector2(1070, 265), 130, TypeCase.VIDE, _textureCase),
+            new Case(new Vector2(1070, 330), 130, TypeCase.VIDE, _textureCase),
+            new Case(new Vector2(1070, 395), 130, TypeCase.QUESTION, _textureCase),
+            new Case(new Vector2(1070, 460), 130, TypeCase.CHANCE, _textureCase),
+            new Case(new Vector2(1070, 525), 130, TypeCase.VIDE, _textureCase),
+            new Case(new Vector2(1070, 590), 130, TypeCase.JOKER, _textureCase),
+            new Case(new Vector2(1070, 655), 130, TypeCase.QUESTION, _textureCase),
+            new Case(new Vector2(1070, 720), 130, TypeCase.QUESTION, _textureCase),
 
-        // Colonne de droite
-        new Case(new Vector2(1070, 265), 130, TypeCase.VIDE, _textureCase),
-        new Case(new Vector2(1070, 330), 130, TypeCase.VIDE, _textureCase),
-        new Case(new Vector2(1070, 395), 130, TypeCase.QUESTION, _textureCase),
-        new Case(new Vector2(1070, 460), 130, TypeCase.CHANCE, _textureCase),
-        new Case(new Vector2(1070, 525), 130, TypeCase.VIDE, _textureCase),
-        new Case(new Vector2(1070, 590), 130, TypeCase.JOKER, _textureCase),
-        new Case(new Vector2(1070, 655), 130, TypeCase.QUESTION, _textureCase),
-        new Case(new Vector2(1070, 720), 130, TypeCase.QUESTION, _textureCase),
+            // Ligne du bas
+            new Case(new Vector2(1070, 720), 130, TypeCase.VIDE, _textureCase),
+            new Case(new Vector2(940, 720), 130, TypeCase.QUESTION, _textureCase),
+            new Case(new Vector2(810, 720), 130, TypeCase.QUESTION, _textureCase),
+            new Case(new Vector2(680, 720), 130, TypeCase.JOKER, _textureCase),
+            new Case(new Vector2(550, 720), 130, TypeCase.VIDE, _textureCase),
+            new Case(new Vector2(420, 720), 130, TypeCase.CHANCE, _textureCase),
+            new Case(new Vector2(290, 720), 130, TypeCase.QUESTION, _textureCase),
+            new Case(new Vector2(160, 720), 130, TypeCase.VIDE, _textureCase),
+            new Case(new Vector2(30, 720), 130, TypeCase.VIDE, _textureCase),
+            
+            // Colonne de gauche
+            new Case(new Vector2(30, 720), 130, TypeCase.QUESTION, _textureCase),
+            new Case(new Vector2(30, 655), 130, TypeCase.QUESTION, _textureCase),
+            new Case(new Vector2(30, 590), 130, TypeCase.JOKER, _textureCase),
+            new Case(new Vector2(30, 525), 130, TypeCase.VIDE, _textureCase),
+            new Case(new Vector2(30, 460), 130, TypeCase.CHANCE, _textureCase),
+            new Case(new Vector2(30, 395), 130, TypeCase.QUESTION, _textureCase),
+            new Case(new Vector2(30, 330), 130, TypeCase.VIDE, _textureCase),
+            new Case(new Vector2(30, 265), 130, TypeCase.VIDE, _textureCase),
+        };
 
-        // Ligne du bas
-        new Case(new Vector2(30, 720), 130, TypeCase.VIDE, _textureCase),
-        new Case(new Vector2(160, 720), 130, TypeCase.VIDE, _textureCase),
-        new Case(new Vector2(290, 720), 130, TypeCase.QUESTION, _textureCase),
-        new Case(new Vector2(420, 720), 130, TypeCase.CHANCE, _textureCase),
-        new Case(new Vector2(550, 720), 130, TypeCase.VIDE, _textureCase),
-        new Case(new Vector2(680, 720), 130, TypeCase.JOKER, _textureCase),
-        new Case(new Vector2(810, 720), 130, TypeCase.QUESTION, _textureCase),
-        new Case(new Vector2(940, 720), 130, TypeCase.QUESTION, _textureCase),
-        new Case(new Vector2(1070, 720), 130, TypeCase.VIDE, _textureCase),
-};
+        _plateau = new Plateau(_backgroundPlateau, cases);
+        Joueur j1 = new Joueur("Lilian", _textureJoueurs[0], new Vector2(60, 240), cases[0]);
+        Joueur j2 = new Joueur("Doriane", _textureJoueurs[1], new Vector2(80, 240), cases[0]);
 
-    _plateau = new Plateau(_backgroundPlateau, cases);
-    Joueur j1 = new Joueur("Lilian", _textureJoueurs[0], new Vector2(50, 50), cases[0]);
-    Joueur j2 = new Joueur("Doriane", _textureJoueurs[0], new Vector2(50, 50), cases[0]);
+        _joueurs.Add(j1);
+        _joueurs.Add(j2);
+        Console.WriteLine(j1.GetPosition());
+        Console.WriteLine(j2.GetPosition());
 
-    _joueurs.Add(j1);
-    _joueurs.Add(j2);
+        _partie = new Partie(_plateau, _joueurs);
+
     }
 
     protected override void Update(GameTime gameTime)
@@ -145,7 +156,23 @@ public class Game1 : Game
             }
         }
         
+        UpdateInput();
         base.Update(gameTime);
+    }
+    
+    private void UpdateInput()
+    {
+        KeyboardState nouvelEtat = Keyboard.GetState();
+
+        if (nouvelEtat.IsKeyDown(Keys.Space))
+        {
+            if (!ancienEtat.IsKeyDown(Keys.Space))
+            {
+                _partie.jouerTour();
+                Console.WriteLine("On joue un tour");
+            }
+        }
+        ancienEtat = nouvelEtat;
     }
 
     protected override void Draw(GameTime gameTime)
@@ -156,8 +183,8 @@ public class Game1 : Game
         
 
         _plateau.Draw(_spriteBatch);
-        _joueurs[0].Draw(_spriteBatch); // Determiner plus tard c'était à quel joueur de jouer et déterminer en fonction
-
+        _joueurs[0].Draw(_spriteBatch);
+        _joueurs[1].Draw(_spriteBatch);
         _spriteBatch.End();
 
         base.Draw(gameTime);
