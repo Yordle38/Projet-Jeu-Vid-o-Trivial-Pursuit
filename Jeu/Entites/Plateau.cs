@@ -20,6 +20,23 @@ public class Plateau
         _cases.Add(nvCase);
     }
     
+    public int GetIndiceCase(Case caseJoueur)
+    {
+        return _cases.IndexOf(caseJoueur);
+    }
+    
+    public int GetNombreCases()
+    {
+        return _cases.Count;
+    }
+    
+    // Recupere la case à l'indince demandé
+    public Case GetCase(int indice)
+    {
+        return _cases[indice];
+    }
+
+    
     public void Draw(SpriteBatch spriteBatch)
     {
         spriteBatch.Draw(_background, new Rectangle(0, 0, 1600, 900), Color.White);
