@@ -27,6 +27,11 @@ public class Case : Sprite
         _fontCase = font;
     }
     
+    public Vector2 GetPosition()
+    {
+        return _position;
+    }
+    
     // Redéfinition de Draw (dans Sprite) pour que le rectangle soit au bon format
     public new void Draw(SpriteBatch spriteBatch)
     {
