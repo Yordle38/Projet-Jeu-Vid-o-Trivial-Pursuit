@@ -4,20 +4,22 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://www.univ-grenoble-alpes.fr/l3miage/trivialpursuit ../xsd/game.xsd">
     <Plateau>
         <Cases>
-            <Case id="1" couleur="BLEU" type="VIDE" >
-                <Sprite texture="case1_texture.png" couleur="BLEU" positionX="5" positionY="10" size="20" sizeMin="20"/>
+            <Case  couleur="BLEU" type="VIDE" >
+                <Sprite texture="case1_texture.png" couleur="BLEU" positionX="10" positionY="10" size="20" sizeMin="20"/>
             </Case>
+
             
-            <Case id="2" couleur="ROUGE" type="QUESTION" >
+            
+            <Case couleur="ROUGE" type="QUESTION" >
                     <Sprite texture="case2_texture.png" couleur="ROUGE" positionX="10" positionY="15" size="25" sizeMin="15"/>
             </Case>
 
-            <Case id="3" couleur="VERT" type="CHANCE" effet="Chance" >
-                <Sprite texture="case2_texture.png" couleur="VERT" positionX="10" positionY="15" size="25" sizeMin="15"/>
+            <Case  couleur="VERT" type="CHANCE" >
+                <Sprite texture="case2_texture.png" couleur="VERT" positionX="20" positionY="10" size="25" sizeMin="15"/>
             </Case>
             
-            <Case id="4" couleur="ORANGE" type="CHALLENGE" effet="Challenge" >
-                <Sprite texture="case2_texture.png" couleur="ORANGE" positionX="10" positionY="15" size="25" sizeMin="15"/>
+            <Case  couleur="ORANGE" type="CHALLENGE"  >
+                <Sprite texture="case2_texture.png" couleur="ORANGE" positionX="25" positionY="10" size="25" sizeMin="15"/>
             </Case>
         </Cases>
         <Background texture="plateau_texture.png"/>
@@ -27,14 +29,14 @@ xsi:schemaLocation="http://www.univ-grenoble-alpes.fr/l3miage/trivialpursuit ../
     <Categories>
         <Categorie id="1" nom="Histoire" couleur="ROUGE">
             <Cartes>
-                <Carte id="101" difficulte="2">
+                <Carte id="101" difficulte="Facile">
                     <Question> Le premier président de la france ?</Question>
                     <Reponses>
                         <Reponse id="1" texte="Louis-Napoléon Bonaparte" correct="true"/>
-                        <Reponse id="1" texte="Gaston Doumergue" correct="false"/>
+                        <Reponse id="2" texte="Gaston Doumergue" correct="false"/>
                     </Reponses>
                 </Carte>
-                <Carte id="102" difficulte="3">
+                <Carte id="102" difficulte="Moyen">
                     <Question> Quelle année la seconde guerre mondiale a t elle pris fin ? </Question>
                     <Reponses>
                         <Reponse id="1" texte="1945" correct="true"/>
@@ -49,7 +51,7 @@ xsi:schemaLocation="http://www.univ-grenoble-alpes.fr/l3miage/trivialpursuit ../
         
         <Categorie id="2" nom="Science" couleur="VERT">
             <Cartes>
-                <Carte id="201" difficulte="1">
+                <Carte id="201" difficulte="Difficile">
                     <Question> quelle est la formule chimique de l'eau ?</Question>
                     <Reponses>
                         <Reponse id="1" texte="H2O" correct="true"/>
