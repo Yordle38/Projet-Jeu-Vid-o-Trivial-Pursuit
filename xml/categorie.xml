@@ -2,7 +2,9 @@
 <Categories xmlns="http://www.univ-grenoble-alpes.fr/l3miage/trivialpursuit"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://www.univ-grenoble-alpes.fr/l3miage/trivialpursuit ../xsd/categorie.xsd">
-           
+    
+    
+        <!--Zythologie-->   
     <Categorie id="1" nom="Zythologie" couleur="ffcc5c">
     <Cartes>
         <Carte id="101" difficulte="Facile" categorie="Zythologie">
@@ -128,9 +130,9 @@
     </Cartes>
 </Categorie>
 
-    
-    
-    
+
+
+    <!--Histoire-->
     <Categorie id="2" nom="Histoire" couleur="b2ebf2">
         <Cartes>
             <Carte id="101" difficulte="Facile" categorie="Histoire">
@@ -236,7 +238,7 @@
     </Categorie>
 
 
-
+    <!--Musique-->
 
     <Categorie id="3" nom="Musique" couleur="b2ebf2">
         <Cartes>
@@ -362,11 +364,11 @@
         </Cartes>
     </Categorie>
 
-    
-    
-    
-    
-    
+
+
+
+    <!--Sport-->
+
     <Categorie id="4" nom="Sport" couleur="ff6f61">
         <Cartes>
             <Carte id="401" difficulte="Facile" categorie="Sport">
@@ -491,11 +493,11 @@
         </Cartes>
     </Categorie>
 
-    
-    
-    
-    
-    
+
+
+    <!--Jeux video-->
+
+
     <Categorie id="5" nom="Jeux vidéo" couleur="f093fb">
     <Cartes>
         <Carte id="401" difficulte="Facile" categorie="Jeux vidéo">
@@ -584,8 +586,7 @@
                 <Reponse id="1" texte="Final Fantasy" correct="true"/>
                 <Reponse id="2" texte="Final Fantasy VII" correct="false"/>
                 <Reponse id="3" texte="inal Fantasy X" correct="false"/>
-                <Reponse id="4" texte="Final Fantasy XV
-" correct="false"/>
+                <Reponse id="4" texte="Final Fantasy XV" correct="false"/>
             </Reponses>
         </Carte>
 
@@ -622,7 +623,7 @@
     </Categorie>
 
 
-
+    <!--Nature-->
 
     <Categorie id="6" nom="Nature" couleur="88d498">
         <Cartes>
