@@ -8,12 +8,11 @@ using Trivial_Pursuit.Jeu.Enumeration;
 
 namespace Trivial_Pursuit.Jeu.Entites;
 
-// une case est un sprite et donc en hérite
 public class Case : Sprite
 {
-    private TypeCase Type { get; set; } 
+    public TypeCase Type { get; private set; } 
     private static SpriteFont _fontCase; // Constante initialisée en debut de programme
-    private Categorie Categorie { get; set; }
+    public  Categorie Categorie { get; private set; }
     
     public Case(Vector2 position, int taille, TypeCase typeCase, Texture2D texture, Categorie categorie = null) 
         : base(texture, position, taille, (categorie ?? new Categorie()).Couleur) // constructeur de Sprite
