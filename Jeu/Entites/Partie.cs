@@ -1,38 +1,38 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
+using Trivial_Pursuit.Jeu.Enumeration;
 
 namespace Trivial_Pursuit.Jeu.Entites;
 
 public class Partie
 {
     private Plateau _plateau;
-    private List<Joueur> _joueurs;
-    private int _tourJoueur;
-    private bool _partieFinit;
+    public List<Joueur> Joueurs { get; private set; }
+    private List<Carte> _cartes;
+    private List<Carte> _cartesJouees;
+    public Carte CartePiochee { get; set; }
 
-    public Partie(Plateau plateau, List<Joueur> joueurs)
+    public int TourJoueur { get; set; }
+
+    public Partie(Plateau plateau, List<Joueur> joueurs,List<Carte> cartes)
     {
         _plateau = plateau;
-        _joueurs = joueurs;
-        _tourJoueur = 0; // on commence par le premier joueur (le numero 0)
-        _partieFinit = false;
+        Joueurs = joueurs;
+        _cartes = cartes;
+        _cartesJouees = new List<Carte>();
+        CartePiochee = null;
+        TourJoueur = 0; // on commence par le premier joueur (le numero 0)
     }
 
-    public void jouerPartie()
-    {
-        while (_partieFinit == false)
-        {
-            jouerTour();
-        }
-    }
     // joue un tour
-    public void jouerTour()
+    public void JouerTour()
     {
         // LANCER DE DÉ ET UPDATE DE LA POSITION DU JOUEUR
-        Joueur joueurActif = _joueurs[_tourJoueur];
+        Joueur joueurActif = Joueurs[TourJoueur];
         Case caseJoueur = joueurActif.GetCase();
-        int valeurDe = lancerDe();
+        int valeurDe = LancerDe();
         
         int numeroCaseActuelle = _plateau.GetIndiceCase(caseJoueur);
         int numeroNouvelleCase = (numeroCaseActuelle + valeurDe) % _plateau.GetNombreCases();
@@ -44,24 +44,46 @@ public class Partie
         joueurActif.SetCase(nouvelleCase);
         DecalageSiSuperposition(joueurActif);
 
-    
-        // LE JOUEUR REPONDS EVENTUELLEMENT A SA QUESTION
-        
-        // UPDATE DU SCORE DU JOUEUR
-        
-        // CHECK SI LE JOUEUR A GAGNÉ
-        if (joueurActif.GetScore() == 6)
+        switch (joueurActif.GetCase().Type)
         {
-            _partieFinit = true;
+            case TypeCase.JOKER:
+                joueurActif.AjouterRandomJoker();
+                // Choisi le prochain joueur à jouer
+                TourJoueur = (TourJoueur + 1) % Joueurs.Count;
+                break;
+            
+            case TypeCase.CHANCE:
+                joueurActif.ActiverChoixDifficulte();
+                break;
+            
+            case  TypeCase.QUESTION:
+                joueurActif.ActiverChoixDifficulte();
+                break;
+            case TypeCase.VIDE:
+                // Choisi le prochain joueur à jouer
+                TourJoueur = (TourJoueur + 1) % Joueurs.Count;
+                break;
         }
         
-        // Choisi le prochain joueur à jouer
-        _tourJoueur = (_tourJoueur + 1) % _joueurs.Count;
 
+    }
+    
+    // Choisi une carte non jouée dans le jeu de la catégorie et difficulté demandée de manière aléatoire puis set CartePiochee
+    public void PiocherCarte(Categorie categorie, Difficulte difficulte)
+    {
+        // Recupere les cartes de la bonne difficulté et bonne catégorie
+        var cartesFiltrees = _cartes.Where(c => c.Categorie == categorie && c.GetDifficulte() == difficulte).ToList();
+        Console.WriteLine("Difficulte: " + difficulte + " Categorie: " + categorie.GetNom());
+        Console.WriteLine("Nombre de carte filtrees: " + cartesFiltrees.Count);
+        
+        // Choisit une carte aléatoire dans le lot
+        Random rnd = new Random();
+        
+        CartePiochee = cartesFiltrees[rnd.Next(cartesFiltrees.Count)];
     }
 
     // Retourne le lancé de Dé entre 1 et 6
-    public int lancerDe()
+    public int LancerDe()
     {
         Random rnd = new Random();
         return rnd.Next(1, 7);
@@ -72,7 +94,7 @@ public class Partie
     private void DecalageSiSuperposition(Joueur joueur)
     {
         // check si un autre joueur est sur la même case
-        foreach (var autreJoueur in _joueurs)
+        foreach (var autreJoueur in Joueurs)
         {
             if (joueur != autreJoueur && joueur.GetCase() == autreJoueur.GetCase())
             {
