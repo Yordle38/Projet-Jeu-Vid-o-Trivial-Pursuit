@@ -3,6 +3,7 @@
     targetNamespace="http://www.univ-grenoble-alpes.fr/l3miage/trivialpursuit"
     xmlns:tp="http://www.univ-grenoble-alpes.fr/l3miage/trivialpursuit"
     elementFormDefault="qualified">
+    
     <!-- Element racine -->
     <xs:element name="TrivialPursuit" type="tp:TrivialPursuit">
         <xs:unique name="CategorieId">
@@ -14,11 +15,18 @@
             <xs:selector xpath="tp:Joueurs/tp:Joueur"/>
             <xs:field xpath="@id"/>
         </xs:unique>
-        
-        <xs:unique name="CaseId">
+
+        <xs:unique name="CasePosition">
             <xs:selector xpath="tp:Plateau/tp:Cases/tp:Case"/>
+            <xs:field xpath="tp:Sprite/@positionX"/>
+            <xs:field xpath="tp:Sprite/@positionY"/>
+        </xs:unique>
+
+        <xs:unique name="ReponseID">
+            <xs:selector xpath="tp:Carte/tp:Question/tp:Reponse"/>
             <xs:field xpath="@id"/>
         </xs:unique>
+    
 
         <xs:unique name="CarteId">
             <xs:selector xpath="tp:Categories/tp:Categorie/tp:Cartes/tp:Carte"/>
@@ -72,10 +80,10 @@
             <xs:element name="Joker" type="tp:Joker" minOccurs="0"/>
             <xs:element name="Sprite" type="tp:Sprite"/>
         </xs:sequence>
-        <xs:attribute name="id" type="xs:int" use="required"/>
+        
+        <!--<xs:attribute name="id" type="xs:int" use="optional"/> -->
         <xs:attribute name="couleur" type="tp:Couleur" use="required"/>
         <xs:attribute name="type" type="tp:TYPECASE" use="required"/>
-        <xs:attribute name="effet" type="tp:EFFETCASE" use="optional"/>
     </xs:complexType>
     
     <!-- types de cases-->
@@ -88,18 +96,8 @@
             <xs:enumeration value="JOKER"/>
         </xs:restriction>
     </xs:simpleType>
+    
 
-    <!-- effets pour les cases-->
-    <xs:simpleType name="EFFETCASE">
-        <xs:restriction base="xs:string">
-            <xs:enumeration value="Chance"/>
-            <xs:enumeration value="Challenge"/>
-            <xs:enumeration value="50/50"/>
-            <xs:enumeration value="Relance de question"/>
-        </xs:restriction>
-    </xs:simpleType>
-    
-    
     
     
     <!-- Sprite -->
@@ -124,6 +122,17 @@
         </xs:restriction>
     </xs:simpleType>
 
+
+
+    <xs:simpleType name="Difficulte">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Facile"/>
+            <xs:enumeration value="Moyen"/>
+            <xs:enumeration value="Difficile"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    
     <!-- Joker -->
     <xs:complexType name="Joker">
             <xs:attribute name="id" type="xs:int" use="required"/>
@@ -161,7 +170,7 @@
             </xs:element>        
         </xs:sequence> 
         <xs:attribute name="id" type="xs:int" use="required"/>
-        <xs:attribute name="difficulte" type="xs:int" use="required"/>
+        <xs:attribute name="difficulte" type="tp:Difficulte" use="required"/>
     </xs:complexType>
 
     <xs:complexType name="Reponses">
