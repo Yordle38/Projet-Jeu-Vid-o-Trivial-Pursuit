@@ -20,4 +20,10 @@ public class Categorie
         Nom = nom;
         Couleur = couleur;
     }
+
+    public string GetNom()
+    {
+        return Nom;
+    }
+    
 }
