@@ -13,7 +13,6 @@ public class Partie
     private List<Carte> _cartes;
     private List<Carte> _cartesJouees;
     public Carte CartePiochee { get; set; }
-
     public int TourJoueur { get; set; }
 
     public Partie(Plateau plateau, List<Joueur> joueurs,List<Carte> cartes)
@@ -65,7 +64,6 @@ public class Partie
                 break;
         }
         
-
     }
     
     // Choisi une carte non jouée dans le jeu de la catégorie et difficulté demandée de manière aléatoire puis set CartePiochee
@@ -101,6 +99,18 @@ public class Partie
                 joueur.SetPosition(new Vector2( joueur.GetPosition().X + 30,  joueur.GetPosition().Y));
             }
         }
+    }
+
+    public bool EstTerminee()
+    {
+        foreach (var joueur in Joueurs)
+        {
+            if (joueur.Score == 6)
+            {
+                return true;
+            }
+        }
+        return false;
     }
     
     
