@@ -296,13 +296,15 @@ public class Game1 : Game
 
     protected override void Update(GameTime gameTime)
     {
+        Joueur joueurAJouer = _partie.Joueurs[_partie.TourJoueur];
+
         switch (SceneActive)
         {
             case Scenes.SETUP:
                 
                 break;
             case Scenes.PLATEAU:
-                // TODO: Add your update logic here
+                UpdateInput();
                 foreach (var joueur in _joueurs)
                 {
                     if (joueur.Etat==EtatJoueur.ChoixDifficulte) 
@@ -312,63 +314,88 @@ public class Game1 : Game
                 }
                 break;
             case Scenes.CHOIX_DIFFICULTE:
-                List<ElementInteractif> elements = new List<ElementInteractif>
+                List<ElementInteractif> difficultes = new List<ElementInteractif>
                 {
                     new ElementInteractif(new Rectangle(200, 200, 200, 100), Color.White, "Facile"),
                     new ElementInteractif(new Rectangle(650, 200, 200, 100), Color.White, "Moyen"),
                     new ElementInteractif(new Rectangle(1100, 200, 200, 100), Color.White, "Difficile")
                 };
 
-                // Recupere le joueur qui joue
-                Joueur joueurAJouer = _partie.Joueurs[_partie.TourJoueur];
-
-                if (joueurAJouer.Etat == EtatJoueur.ChoixDifficulte)
+                joueurAJouer.Update();
+                // Check si le joueur est sure une case
+                foreach (ElementInteractif difficulte in difficultes)
                 {
-                    joueurAJouer.Update();
-                    // Check si le joueur est sure une case
-                    foreach (ElementInteractif element in elements)
+                    if (joueurAJouer._Rect.Intersects(difficulte.Rectangle))
                     {
-                        if (joueurAJouer._Rect.Intersects(element.Rectangle))
+                        if (Keyboard.GetState().IsKeyDown(Keys.Space))
                         {
-                            if (Keyboard.GetState().IsKeyDown(Keys.Space))
+                            // Convertit la valeur de l'enum en string et compare
+                            if (Enum.TryParse<Difficulte>(difficulte.Texte, true, out Difficulte difficulteChoisie))
                             {
-                                // Convertit la valeur de l'enum en string et compare
-                                if (Enum.TryParse<Difficulte>(element.Texte, true, out Difficulte difficulteChoisie))
-                                {
-                                    // Pioche une carte random
-                                    _partie.PiocherCarte(joueurAJouer.GetCase().Categorie, difficulteChoisie);
+                                // Pioche une carte random
+                                _partie.PiocherCarte(joueurAJouer.GetCase().Categorie, difficulteChoisie);
 
-                                    // Modifie l'état du joueur et de la scène
-                                    joueurAJouer.Etat=EtatJoueur.ChoixReponse;
-                                    SceneActive = Scenes.CHOIX_REPONSE;
+                                // Modifie l'état du joueur et de la scène
+                                joueurAJouer.Etat=EtatJoueur.ChoixReponse;
+                                SceneActive = Scenes.CHOIX_REPONSE;
 
-                                }
                             }
                         }
                     }
                 }
+                
                 break;
+            
             case Scenes.CHOIX_REPONSE:
                 _partie.Joueurs[_partie.TourJoueur].Update();
-                //Console.WriteLine(_partie.Joueurs[_partie.TourJoueur].GetNom());
-                break;
-            case Scenes.TOUR_TERMINE:
-                _partie.TourJoueur = (_partie.TourJoueur + 1) % _joueurs.Count;
-                // VERIFIER LE SCORE DU JOUEUR, S'IL A GAGNE, PASSE EN ETAT PARTIE TERMINEE
                 
+                List<ElementInteractif> elementReponses = new List<ElementInteractif>
+                {
+                    new ElementInteractif(new Rectangle(120, 200, 600, 200), Color.White, _partie.CartePiochee.Reponses[0].Texte),
+                    new ElementInteractif(new Rectangle(820, 200, 600, 200), Color.White, _partie.CartePiochee.Reponses[1].Texte),
+                    new ElementInteractif(new Rectangle(120, 500, 600, 200), Color.White, _partie.CartePiochee.Reponses[2].Texte),
+                    new ElementInteractif(new Rectangle(820, 500, 600, 200), Color.White, _partie.CartePiochee.Reponses[3].Texte)
+                };
+
+                int numReponse = 0;
+                foreach (ElementInteractif reponse in elementReponses)
+                {
+                    if (joueurAJouer._Rect.Intersects(reponse.Rectangle))
+                    {
+                        // Fait jouer la réponse au joueur
+                        if (Keyboard.GetState().IsKeyDown(Keys.Enter))
+                        {
+                            joueurAJouer.JouerReponse(_partie.CartePiochee.Reponses[numReponse]);
+                            SceneActive = Scenes.TOUR_TERMINE;
+                        }
+                    }
+                    numReponse ++;
+                }
+                break;
+            
+            case Scenes.TOUR_TERMINE:
+                if (_partie.EstTerminee())
+                {
+                    Console.WriteLine("Fin de partie");
+                    SceneActive = Scenes.FIN_PARTIE;
+                }
+                else
+                {
+                    SceneActive = Scenes.PLATEAU;
+                    joueurAJouer.SetPositionSurCase();
+                    _partie.TourJoueur = (_partie.TourJoueur + 1) % _joueurs.Count;
+                }
                 break;
             case Scenes.FIN_PARTIE:
                 break;
         }
-        
-        UpdateInput();
         base.Update(gameTime);
     }
     
+    // Joue un tour lorsqu'un appuie sur espace en évitant le spam lors d'appuie prolongé
     private void UpdateInput()
     {
         KeyboardState nouvelEtat = Keyboard.GetState();
-
         if (nouvelEtat.IsKeyDown(Keys.Space))
         {
             if (!ancienEtat.IsKeyDown(Keys.Space))
@@ -382,8 +409,8 @@ public class Game1 : Game
 
     protected override void Draw(GameTime gameTime)
     {
+        Joueur joueurAJouer = _partie.Joueurs[_partie.TourJoueur];
         GraphicsDevice.Clear(Color.CornflowerBlue);
-        // TODO: Add your drawing code here
         _spriteBatch.Begin();
         
         switch (SceneActive)
@@ -399,54 +426,68 @@ public class Game1 : Game
 
                 break;
             case Scenes.CHOIX_DIFFICULTE:
-                List<ElementInteractif> elements = new List<ElementInteractif>
+                List<ElementInteractif> difficultes = new List<ElementInteractif>
                 {
                     new ElementInteractif(new Rectangle(200, 200, 200, 100), Color.White, "Facile"),
                     new ElementInteractif(new Rectangle(650, 200, 200, 100), Color.White, "Moyen"),
                     new ElementInteractif(new Rectangle(1100, 200, 200, 100), Color.White, "Difficile")
                 };
 
-                foreach (ElementInteractif element in elements)
+                foreach (ElementInteractif difficulte in difficultes)
                 {
-                    element.Draw(_spriteBatch, _textureCase, _fontCase, Color.Black);
-                }
-
-                // Recupere le joueur qui joue
-                Joueur joueurAJouer = _partie.Joueurs[_partie.TourJoueur];
-                
-                if (joueurAJouer.Etat == EtatJoueur.ChoixDifficulte)
-                {
-                    joueurAJouer.Draw(_spriteBatch);
-
-                    foreach (ElementInteractif element in elements)
+                    difficulte.Draw(_spriteBatch, _textureCase, _fontCase, Color.Black);
+                    
+                    // Vérifie si le joueur est au dessus d'un choix de difficulte
+                    if (joueurAJouer._Rect.Intersects(difficulte.Rectangle))
                     {
-                        if (joueurAJouer._Rect.Intersects(element.Rectangle))
-                        {
-                            // Place une indication au dessus du rectangle
-                            Vector2 messagePosition = new Vector2(
-                                element.Rectangle.X + (element.Rectangle.Width / 2) - (_fontCase.MeasureString("Appuyez sur ESPACE").X / 2),
-                                element.Rectangle.Y - 20
-                            );
-
-                            _spriteBatch.DrawString(_fontCase, "Appuyez sur ESPACE", messagePosition, Color.Black);
-                        }
+                        // Place une indication au dessus du rectangle
+                        Vector2 messagePosition = new Vector2(
+                            difficulte.Rectangle.X + (difficulte.Rectangle.Width / 2) - (_fontCase.MeasureString("Appuyez sur ESPACE").X / 2),
+                            difficulte.Rectangle.Y - 20
+                        );
+                        _spriteBatch.DrawString(_fontCase, "Appuyez sur ESPACE", messagePosition, Color.Black);
                     }
                 }
                 
+                joueurAJouer.Draw(_spriteBatch);
                 break;
+            
             case Scenes.CHOIX_REPONSE:
-                Joueur joueurAJouer2 = _partie.Joueurs[_partie.TourJoueur];
-                joueurAJouer2.Draw(_spriteBatch);
-
                 string question = _partie.CartePiochee.GetQuestion();
                 
                 // Positionne le texte de la question de manière centré
                 Vector2 tailleTexte = _fontCase.MeasureString(question);
                 float positionCentree = (1600 - tailleTexte.X) / 2;
                 _spriteBatch.DrawString(_fontCase, question, new Vector2(positionCentree, 50), Color.Black);
-
-
+                
+                // Positionne les 4 réponses à la carte piochée
+                List<ElementInteractif> elementReponses = new List<ElementInteractif>
+                {
+                    new ElementInteractif(new Rectangle(120, 200, 600, 200), Color.White, _partie.CartePiochee.Reponses[0].Texte),
+                    new ElementInteractif(new Rectangle(820, 200, 600, 200), Color.White, _partie.CartePiochee.Reponses[1].Texte),
+                    new ElementInteractif(new Rectangle(120, 500, 600, 200), Color.White, _partie.CartePiochee.Reponses[2].Texte),
+                    new ElementInteractif(new Rectangle(820, 500, 600, 200), Color.White, _partie.CartePiochee.Reponses[3].Texte)
+                };
+                
+                foreach (ElementInteractif reponse in elementReponses)
+                {
+                    reponse.Draw(_spriteBatch, _textureCase, _fontCase, Color.Black);
+                    
+                    // Vérifie si le joueur est au dessus d'un choix de réponse
+                    if (joueurAJouer._Rect.Intersects(reponse.Rectangle))
+                    {
+                        // Place une indication au dessus du rectangle
+                        Vector2 messagePosition = new Vector2(
+                            reponse.Rectangle.X + (reponse.Rectangle.Width / 2) - (_fontCase.MeasureString("Appuyez sur ENTREE").X / 2),
+                            reponse.Rectangle.Y - 20
+                        );
+                        _spriteBatch.DrawString(_fontCase, "Appuyez sur ENTREE", messagePosition, Color.Black);
+                    }
+                }
+                
+                joueurAJouer.Draw(_spriteBatch);
                 break;
+            
             case Scenes.FIN_PARTIE:
                 break;
         }
