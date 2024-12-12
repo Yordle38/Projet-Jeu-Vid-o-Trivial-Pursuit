@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Trivial_Pursuit.Jeu.Enumeration;
 
 namespace Trivial_Pursuit.Jeu.Entites;
 
@@ -10,23 +11,102 @@ public class Joueur : Sprite
 {
     private string _nom;
     private Case _case;
-    private int _score;
+    public int Score { get; private set; }
     private List <Joker> _jokers;
-    public bool Actif {  get; set; } // Permet d'activer ou désactiver les mouvements d'un joueur
-
+    public EtatJoueur Etat { get; set; }
 
     public Joueur(string nom,Texture2D texture, Vector2 position, Case caseD) : base(texture, position,80)
     {
         _nom = nom; 
         _case = caseD; // case de départ
-        _score = 0;
+        Score = 0;
         _jokers = new List<Joker>();
-        Actif = false; // innactifs à la création
+        Etat = EtatJoueur.Normal;
+    }
+    
+    public string GetNom()
+    {
+        return _nom;
+    }
+    
+    public Case GetCase()
+    {
+        return _case;
+    }
+    
+    // Modifie la case du joueur et le place à la position de la case
+    public void SetCase(Case nouvelleCase)
+    {
+        _case = nouvelleCase;
+        _position = nouvelleCase.GetPosition();
+        SetPositionSurCase();
     }
 
-    public void update()
+    public void SetPositionSurCase()
     {
-        if (Actif)
+        _position = _case.GetPosition();
+        SetPosition(new Vector2(_position.X+40,_position.Y+40));
+    }
+    
+    public void SetPosition(Vector2 position)
+    {
+        _position = position;
+    }
+    
+    public Vector2 GetPosition()
+    {
+        return _position;
+    }
+
+    // Ajoute un joker à un joueur qu'il ne posséde pas encore
+    public void AjouterRandomJoker()
+    {
+
+        // initialise la liste des joker
+        var typesDeJokers = new List<Joker>
+        {
+            new Joker("50/50", "Supprime deux mauvaises réponses lors d’une question à choix multiple."),
+            new Joker("Relance de question", "Permet de changer la question actuelle par une autre du même thème.")
+        };
+         // recupere un joker aléatoire
+        Random rnd = new Random();
+        Joker jokerAleatoire = typesDeJokers[rnd.Next(typesDeJokers.Count)];
+    }
+   
+    // Active le mode ChoixDifficulte du joueur
+    public void ActiverChoixDifficulte()
+    {
+        Etat = EtatJoueur.ChoixDifficulte;
+        SetPosition(new Vector2(900, 400));
+    }
+    
+    // FAIRE UNE FONCTION JOUER JOKER
+    public void JouerJoker(Joker joker)
+    {
+        // Supprime le premier joker correspondant dans la liste des joker
+        int i = 0;
+        while (i < _jokers.Count && _jokers[i] != joker)
+        {
+            i++;
+        }
+        _jokers.Remove(_jokers[i]);
+    }
+    
+    
+    public void JouerReponse(Reponse reponse)
+    {
+        Console.WriteLine(_nom + "joue la réponse");
+        if (reponse.EstCorrecte)
+        {
+            Console.WriteLine("Il réussi");
+            Score++;
+        }
+        Etat = EtatJoueur.Normal;
+    }
+
+    public void Update()
+    {
+        if (Etat==EtatJoueur.ChoixDifficulte || Etat==EtatJoueur.ChoixReponse)
         {
             KeyboardState keyboardState = Keyboard.GetState();
 
@@ -51,40 +131,7 @@ public class Joueur : Sprite
             }
         }
     }
-
-    public string GetNom()
-    {
-        return _nom;
-    }
-    public int GetScore()
-    {
-        return _score;
-    }
     
-    public Case GetCase()
-    {
-        return _case;
-    }
-    
-    // Modifie la case du joueur et le place à la position de la case
-    public void SetCase(Case nouvelleCase)
-    {
-        _case = nouvelleCase;
-        _position = nouvelleCase.GetPosition();
-        SetPosition(new Vector2(_position.X+40,_position.Y+40));
-    }
-
-    public void SetPosition(Vector2 position)
-    {
-        _position = position;
-    }
-    
-    public Vector2 GetPosition()
-    {
-        return _position;
-    }
-
-
     public new void Draw(SpriteBatch spriteBatch)
     {
         base.Draw(spriteBatch);
