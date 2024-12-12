@@ -7,7 +7,7 @@ public class Carte
 {
     public Categorie Categorie { get; private set; }
     private string _question;
-    private List<Reponse> Reponses { get; set; }
+    public List<Reponse> Reponses { get; private set; }
     private Difficulte _difficulte;
 
     public Carte(Categorie categorie, string question, List<Reponse> reponses, Difficulte difficulte)
