@@ -93,15 +93,22 @@ public class Joueur : Sprite
     }
     
     
+    // Si la réponse est juste augmente le score du joueur et change son état
+    // Si le joueur a juste et qu'il était sur une case chance, le fait rejouer
     public void JouerReponse(Reponse reponse)
     {
         Console.WriteLine(_nom + "joue la réponse");
+        
+        Etat = EtatJoueur.Normal;
         if (reponse.EstCorrecte)
         {
+            if (_case.Type == TypeCase.CHANCE)
+            {
+                Etat = EtatJoueur.Rejouer;
+            }
             Console.WriteLine("Il réussi");
             Score++;
         }
-        Etat = EtatJoueur.Normal;
     }
 
     public void Update()
