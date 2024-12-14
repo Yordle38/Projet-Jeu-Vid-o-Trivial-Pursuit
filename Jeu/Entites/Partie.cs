@@ -52,35 +52,44 @@ public class Partie
                 break;
             
             case TypeCase.CHANCE:
-                joueurActif.ActiverChoixDifficulte();
+                joueurActif.Etat = EtatJoueur.AttenteConfirmation;
                 break;
             
             case  TypeCase.QUESTION:
-                joueurActif.ActiverChoixDifficulte();
+                joueurActif.Etat = EtatJoueur.AttenteConfirmation;
+
                 break;
             case TypeCase.VIDE:
                 // Choisi le prochain joueur à jouer
                 TourJoueur = (TourJoueur + 1) % Joueurs.Count;
                 break;
         }
-        
     }
     
     // Choisi une carte non jouée dans le jeu de la catégorie et difficulté demandée de manière aléatoire puis set CartePiochee
     public void PiocherCarte(Categorie categorie, Difficulte difficulte)
     {
         // Recupere les cartes de la bonne difficulté et bonne catégorie
-        var cartesFiltrees = _cartes.Where(c => c.Categorie == categorie && c.GetDifficulte() == difficulte).ToList();
+        var cartesFiltrees = _cartes.Where(c => c.Categorie == categorie && c.GetDifficulte() == difficulte && !_cartesJouees.Contains(c)).ToList();
+
         Console.WriteLine("Difficulte: " + difficulte + " Categorie: " + categorie.GetNom());
         Console.WriteLine("Nombre de carte filtrees: " + cartesFiltrees.Count);
+        
+        // Si toute les cartes de la catégorie et difficulté déjà jouées, on autorise à rejouer les cartes
+        if (cartesFiltrees.Count == 0)
+        {
+            Console.WriteLine("Toute les cartes de la catégorie {0} et de difficulté {1} déjà jouées, on rejoue des cartes",categorie,difficulte);
+            cartesFiltrees = _cartes.Where(c => c.Categorie == categorie && c.GetDifficulte() == difficulte).ToList();
+        }
         
         // Choisit une carte aléatoire dans le lot
         Random rnd = new Random();
         
         CartePiochee = cartesFiltrees[rnd.Next(cartesFiltrees.Count)];
+        _cartesJouees.Add(CartePiochee);
     }
 
-    // Retourne le lancé de Dé entre 1 et 6
+    // Retourne un chiffre entre 1 et 6
     public int LancerDe()
     {
         Random rnd = new Random();
