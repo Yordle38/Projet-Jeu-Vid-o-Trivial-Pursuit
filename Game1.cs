@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -14,6 +15,8 @@ enum Scenes
     PLATEAU,
     CHOIX_DIFFICULTE,
     CHOIX_REPONSE,
+    REPONSE_CHOISIE_JUSTE,
+    REPONSE_CHOISIE_FAUSSE,
     TOUR_TERMINE,
     FIN_PARTIE
 };
@@ -22,18 +25,19 @@ public class Game1 : Game
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
     private SpriteFont _fontCase;
-    private KeyboardState ancienEtat;
-    private Scenes SceneActive { get; set; }
+    private KeyboardState _ancienEtatClavier;
     
+    // Rendu
+    private Scenes SceneActive { get; set; }
     private Texture2D _textureCase;
     private Texture2D _backgroundPlateau;
     private List<Texture2D> _textureJoueurs;
+    
+    // Partie
+    private Partie _partie;
     private Plateau _plateau;
     private List<Joueur> _joueurs;
-    private Partie _partie;
-    
-    //private double _tmpDerniereAction = 0; // Temps écoulé depuis la dernière action
-    //private const double _dureeAttente = 1.0; // attente en seconde avant la prochaine
+    private String _phrasePrincipale;
 
     public Game1()
     {
@@ -43,17 +47,17 @@ public class Game1 : Game
         _textureJoueurs = new List<Texture2D>();
         _joueurs = new List<Joueur>();
         SceneActive = Scenes.PLATEAU; // à changer en setup
-
+        _phrasePrincipale = "";
     }
 
     protected override void Initialize()
     {
-        // Réglage de la taille du tableau
+        // Réglage de la taille du plateau
         _graphics.PreferredBackBufferWidth = 1600;
         _graphics.PreferredBackBufferHeight = 900;
         _graphics.ApplyChanges();
         
-        ancienEtat = Keyboard.GetState();
+        _ancienEtatClavier = Keyboard.GetState();
         
         base.Initialize();
     }
@@ -71,7 +75,9 @@ public class Game1 : Game
         // Load l'image des joueurs 
         _textureJoueurs.Add(Content.Load<Texture2D>("Images/pion-rouge"));
         _textureJoueurs.Add(Content.Load<Texture2D>("Images/pion-bleu"));
-
+        _textureJoueurs.Add(Content.Load<Texture2D>("Images/pion-jaune"));
+        _textureJoueurs.Add(Content.Load<Texture2D>("Images/pion-vert"));
+        
         // load Le font des cases
         _fontCase = Content.Load<SpriteFont>("font/FontCase");
         // met ce font par défaut à toute les cases
@@ -946,24 +952,36 @@ new Carte(nature,
         switch (SceneActive)
         {
             case Scenes.SETUP:
-                
+                _phrasePrincipale = "Choisissez le nombre de joueurs";
                 break;
             case Scenes.PLATEAU:
-                UpdateInput();
-                foreach (var joueur in _joueurs)
+                if (joueurAJouer.Etat == EtatJoueur.Normal)
                 {
-                    if (joueur.Etat==EtatJoueur.ChoixDifficulte) 
-                    {
-                        SceneActive = Scenes.CHOIX_DIFFICULTE;
-                    }
+                    _phrasePrincipale = "A " + joueurAJouer.GetNom() + " de jouer, appuyez sur espace";
                 }
+                else
+                {
+                    _phrasePrincipale = joueurAJouer.GetNom() + " c'est déplacé ! Appuyez sur espace pour répondre à la question";
+                }
+                
+                if (joueurAJouer.Etat == EtatJoueur.ChoixDifficulte)
+                {
+                    SceneActive = Scenes.CHOIX_DIFFICULTE;
+                }
+                
+                UpdateInput();
+
                 break;
+            
             case Scenes.CHOIX_DIFFICULTE:
+                _phrasePrincipale = "Choisissez une difficulté pour " + joueurAJouer.GetCase().Categorie.GetNom();
+
+                
                 List<ElementInteractif> difficultes = new List<ElementInteractif>
                 {
-                    new ElementInteractif(new Rectangle(200, 200, 200, 100), Color.White, "Facile"),
-                    new ElementInteractif(new Rectangle(650, 200, 200, 100), Color.White, "Moyen"),
-                    new ElementInteractif(new Rectangle(1100, 200, 200, 100), Color.White, "Difficile")
+                    new ElementInteractif(new Rectangle(250, 200, 200, 100), Color.White, "Facile"),
+                    new ElementInteractif(new Rectangle(700, 200, 200, 100), Color.White, "Moyen"),
+                    new ElementInteractif(new Rectangle(1150, 200, 200, 100), Color.White, "Difficile")
                 };
 
                 joueurAJouer.Update();
@@ -983,7 +1001,6 @@ new Carte(nature,
                                 // Modifie l'état du joueur et de la scène
                                 joueurAJouer.Etat=EtatJoueur.ChoixReponse;
                                 SceneActive = Scenes.CHOIX_REPONSE;
-
                             }
                         }
                     }
@@ -993,36 +1010,121 @@ new Carte(nature,
             
             case Scenes.CHOIX_REPONSE:
                 _partie.Joueurs[_partie.TourJoueur].Update();
-                
-                List<ElementInteractif> elementReponses = new List<ElementInteractif>
-                {
-                    new ElementInteractif(new Rectangle(120, 200, 600, 200), Color.White, _partie.CartePiochee.Reponses[0].Texte),
-                    new ElementInteractif(new Rectangle(820, 200, 600, 200), Color.White, _partie.CartePiochee.Reponses[1].Texte),
-                    new ElementInteractif(new Rectangle(120, 500, 600, 200), Color.White, _partie.CartePiochee.Reponses[2].Texte),
-                    new ElementInteractif(new Rectangle(820, 500, 600, 200), Color.White, _partie.CartePiochee.Reponses[3].Texte)
-                };
 
+                string question = _partie.CartePiochee.GetQuestion();
+                _phrasePrincipale = question;
+                List<ElementInteractif> elementReponsesU = new List<ElementInteractif>();
+                List<ElementInteractif> elementsJokersU = new List<ElementInteractif>();
+                List<Joker> jokersJoueurU = new List<Joker>();
+                
+                // POSITIONNEMENT ET SURVEILLANCE DES REPONSES EN FONCTION DE L'UTILISATION D'UN JOKER
+                if (joueurAJouer.JokerActif.getNom().Equals("50/50"))
+                {
+                    List<Reponse> reponses5050 = joueurAJouer.JokerActif.Jouer5050(_partie.CartePiochee);
+                    elementReponsesU.Add(new ElementInteractif(new Rectangle(20, 200, 450, 200), Color.White, reponses5050[0].Texte)); 
+                    elementReponsesU.Add(new ElementInteractif(new Rectangle(600, 200, 450, 200), Color.White, reponses5050[1].Texte));
+                }
+                else if (joueurAJouer.JokerActif.getNom().Equals("Relance de question"))
+                {
+                    elementReponsesU.Add(new ElementInteractif(new Rectangle(20, 200, 450, 200), Color.White, _partie.CartePiochee.Reponses[0].Texte)); 
+                    elementReponsesU.Add(new ElementInteractif(new Rectangle(600, 200, 450, 200), Color.White, _partie.CartePiochee.Reponses[1].Texte));
+                    elementReponsesU.Add(new ElementInteractif(new Rectangle(20, 500, 450, 200), Color.White, _partie.CartePiochee.Reponses[2].Texte));
+                    elementReponsesU.Add(new ElementInteractif(new Rectangle(600, 500, 450, 200), Color.White, _partie.CartePiochee.Reponses[3].Texte));
+                }
+                else
+                {
+                    jokersJoueurU = joueurAJouer.GetJokers().GroupBy(j => j.getNom()).Select(group => group.First()).ToList();
+                    
+                    elementReponsesU.Add(new ElementInteractif(new Rectangle(20, 200, 450, 200), Color.White, _partie.CartePiochee.Reponses[0].Texte)); 
+                    elementReponsesU.Add(new ElementInteractif(new Rectangle(600, 200, 450, 200), Color.White, _partie.CartePiochee.Reponses[1].Texte));
+                    elementReponsesU.Add(new ElementInteractif(new Rectangle(20, 500, 450, 200), Color.White, _partie.CartePiochee.Reponses[2].Texte));
+                    elementReponsesU.Add(new ElementInteractif(new Rectangle(600, 500, 450, 200), Color.White, _partie.CartePiochee.Reponses[3].Texte));
+                }
+                
+                // GESTION DES REPONSES
                 int numReponse = 0;
                 
-                foreach (ElementInteractif reponse in elementReponses)
+                // Vérifie la validation des réponses
+                foreach (ElementInteractif reponse in elementReponsesU)
                 {
                     if (joueurAJouer._Rect.Intersects(reponse.Rectangle))
                     {
-                        // Fait jouer la réponse au joueur
+                        // Fait jouer la réponse au joueur et enleve son jokerActif
                         if (Keyboard.GetState().IsKeyDown(Keys.Enter))
                         {
-                            joueurAJouer.JouerReponse(_partie.CartePiochee.Reponses[numReponse]);
-                            SceneActive = Scenes.TOUR_TERMINE;
+                            // Si le joueur répond juste à la question
+                            if (joueurAJouer.JouerReponse(_partie.CartePiochee.Reponses[numReponse]))
+                            {
+                                SceneActive = Scenes.REPONSE_CHOISIE_JUSTE;
+
+                            }
+                            // Si le joueur répond faux à la question
+                            else
+                            {
+                                SceneActive = Scenes.REPONSE_CHOISIE_FAUSSE;
+                            }
+                            joueurAJouer.JokerActif = new Joker("", "");
                         }
                     }
                     numReponse ++;
                 }
+                
+                // GESTION DES JOKERS
+                // Recupere une seule instance de chaque joker différent
+                List<Joker> jokersJoueur = joueurAJouer.GetJokers().GroupBy(j => j.getNom()).Select(group => group.First()).ToList();
+
+                if (jokersJoueur.Count == 1)
+                {
+                    elementsJokersU.Add(new ElementInteractif(new Rectangle(1200, 200, 300, 150), Color.White, jokersJoueur[0].getNom()));
+                }
+                else if(jokersJoueur.Count == 2)
+                {
+                    elementsJokersU.Add(new ElementInteractif(new Rectangle(1120, 200, 200, 100), Color.White, jokersJoueur[0].getNom()));
+                    elementsJokersU.Add(new ElementInteractif(new Rectangle(1390, 200, 200, 100), Color.White, jokersJoueur[1].getNom()));
+                }
+
+                int numJoker = 0;
+                // Vérifie l'utilisation des joker
+                foreach (ElementInteractif elementJoker in elementsJokersU)
+                {
+                    if (joueurAJouer._Rect.Intersects(elementJoker.Rectangle))
+                    {
+                        // Utilisation du joker
+                        if (Keyboard.GetState().IsKeyDown(Keys.Enter) && !_ancienEtatClavier.IsKeyDown(Keys.Enter))
+                        {
+                            joueurAJouer.JouerJoker(_partie, jokersJoueur[numJoker]);
+                        }
+                    }
+                    numJoker ++;
+                }
+                _ancienEtatClavier = Keyboard.GetState();
+                break;
+            
+            case Scenes.REPONSE_CHOISIE_JUSTE:
+                _phrasePrincipale = "C'est la bonne réponse ! appuyez sur ENTRER";
+
+                if (Keyboard.GetState().IsKeyDown(Keys.Enter))
+                {
+                    SceneActive = Scenes.TOUR_TERMINE;
+                }
+                _ancienEtatClavier = Keyboard.GetState();
+
+                break;
+            
+            case Scenes.REPONSE_CHOISIE_FAUSSE:
+                _phrasePrincipale = "C'est la mauvaise réponse... appuyez sur ENTRER";
+
+                if (Keyboard.GetState().IsKeyDown(Keys.Enter) && !_ancienEtatClavier.IsKeyDown(Keys.Enter))
+                {
+                    SceneActive = Scenes.TOUR_TERMINE;
+                }
+                _ancienEtatClavier = Keyboard.GetState();
+
                 break;
             
             case Scenes.TOUR_TERMINE:
                 if (_partie.EstTerminee())
                 {
-                    Console.WriteLine("Fin de partie");
                     SceneActive = Scenes.FIN_PARTIE;
                 }
                 else
@@ -1043,7 +1145,20 @@ new Carte(nature,
                 break;
             
             case Scenes.FIN_PARTIE:
+                if (_partie.EstTerminee())
+                {
+                    foreach (Joueur joueur in _partie.Joueurs)
+                    {
+                        if (joueur.Score == 6)
+                        {
+                            _phrasePrincipale = joueur.GetNom() + " a 6 camemberts et remporte doncx la partie !";
+                        }
+                    }
+                    SceneActive = Scenes.FIN_PARTIE;
+                }
+
                 break;
+            
         }
         base.Update(gameTime);
     }
@@ -1056,11 +1171,8 @@ new Carte(nature,
         KeyboardState nouvelEtat = Keyboard.GetState();
         if (nouvelEtat.IsKeyDown(Keys.Space))
         {
-            if (!ancienEtat.IsKeyDown(Keys.Space))
+            if (!_ancienEtatClavier.IsKeyDown(Keys.Space))
             {
-                // _partie.JouerTour();
-                // Console.WriteLine("On joue un tour");
-                
                 if (joueurAJouer.Etat == EtatJoueur.Normal)
                 {
                     Console.WriteLine("Le joueur se déplace");
@@ -1070,11 +1182,11 @@ new Carte(nature,
                 else if (joueurAJouer.Etat == EtatJoueur.AttenteConfirmation)
                 {
                     joueurAJouer.ActiverChoixDifficulte();
-                    Console.WriteLine("Le joueur va jouer son tour.");
+                    Console.WriteLine("Le joueur joue son tour.");
                 }
             }
         }
-        ancienEtat = nouvelEtat;
+        _ancienEtatClavier = nouvelEtat;
     }
 
     protected override void Draw(GameTime gameTime)
@@ -1086,28 +1198,64 @@ new Carte(nature,
         switch (SceneActive)
         {
             case Scenes.SETUP:
-                
                 break;
             case Scenes.PLATEAU:
                 _plateau.Draw(_spriteBatch);
                 _joueurs[0].Draw(_spriteBatch);
                 _joueurs[1].Draw(_spriteBatch);
-                // TODO: Add your update logic here
+               
+               
+                int nbJoueurs = _partie.Joueurs.Count;
 
+                float positionInfoJoueurY = 200;
+                
+                // AFFICHAGE DES INFOS DE CHAQUE JOUEUR SUR LE COTE DROIT DU PLATEAU
+                for (int i = 0; i < nbJoueurs; i++)
+                { 
+                    Joueur j1 = _partie.Joueurs[i];
+                    Joueur joueurTemp = new Joueur(j1.GetNom(), j1._Texture, j1.GetPosition(), j1.GetCase());
+                    joueurTemp.SetPosition(new Vector2(1280,positionInfoJoueurY));
+                    joueurTemp.Draw(_spriteBatch);
+                    
+                    _spriteBatch.DrawString(_fontCase, joueurTemp.GetNom(), new Vector2(1310,positionInfoJoueurY-10), Color.Black);
+                    _spriteBatch.DrawString(_fontCase, "Nombre de camembert : " + _partie.Joueurs[i].Score, new Vector2(1250,positionInfoJoueurY +30), Color.Black);
+                    _spriteBatch.DrawString(_fontCase, "Joker : ", new Vector2(1250,positionInfoJoueurY +50), Color.Black);
+
+                    // Si le joueur a un joker, affiche tous ses différents jokers
+                    if (_partie.Joueurs[i].GetJokers().Count > 0)
+                    {
+
+                        List <Joker> jokersTest = _partie.Joueurs[i].GetJokers();
+
+                        // Recupere une seule instance de chaque joker différent
+                        List<Joker> jokersUnique = _partie.Joueurs[i].GetJokers().GroupBy(j => j.getNom()).Select(group => group.First()).ToList();
+                        
+                        
+                        int decalageTexteY = 1;
+                        foreach (Joker joker in jokersUnique)
+                        {
+                            // Compte combien de fois le joueur a se joker
+                            int nbJokers = _partie.Joueurs[i].GetJokers().Count(j => j.getNom() == joker.getNom());
+                            _spriteBatch.DrawString(_fontCase, "- " + joker.getNom() + " : " + nbJokers, new Vector2(1250,positionInfoJoueurY +50 + 20*decalageTexteY ), Color.Black);
+                            decalageTexteY++;
+                        }
+                    }
+                    else
+                    {
+                        _spriteBatch.DrawString(_fontCase, " - aucun ", new Vector2(1250,positionInfoJoueurY +70), Color.Black);
+                    }
+                    
+                    positionInfoJoueurY += 170;
+                }
                 break;
+            
             case Scenes.CHOIX_DIFFICULTE:
                 List<ElementInteractif> difficultes = new List<ElementInteractif>
                 {
-                    new ElementInteractif(new Rectangle(200, 200, 200, 100), Color.White, "Facile"),
-                    new ElementInteractif(new Rectangle(650, 200, 200, 100), Color.White, "Moyen"),
-                    new ElementInteractif(new Rectangle(1100, 200, 200, 100), Color.White, "Difficile")
+                    new ElementInteractif(new Rectangle(250, 200, 200, 100), Color.White, "Facile"),
+                    new ElementInteractif(new Rectangle(700, 200, 200, 100), Color.White, "Moyen"),
+                    new ElementInteractif(new Rectangle(1150, 200, 200, 100), Color.White, "Difficile")
                 };
-
-                string categorie = joueurAJouer.GetCase().Categorie.GetNom();
-                Vector2 tailleTexteDiff = _fontCase.MeasureString("Choix d'une difficulté pour " + categorie);
-                float positionCentreeDiff = (1600 - tailleTexteDiff.X) / 2;
-                _spriteBatch.DrawString(_fontCase, "Choix d'une difficulté pour " + categorie, new Vector2(positionCentreeDiff, 50), Color.Black);
-
                 
                 foreach (ElementInteractif difficulte in difficultes)
                 {
@@ -1129,23 +1277,36 @@ new Carte(nature,
                 break;
             
             case Scenes.CHOIX_REPONSE:
+                List<ElementInteractif> elementReponses = new List<ElementInteractif>();
+                List<ElementInteractif> elementsJokers = new List<ElementInteractif>();
+                List<Joker> jokersJoueur = new List<Joker>();
+
+
                 
-                string question = _partie.CartePiochee.GetQuestion();
-                
-                // Positionne le texte de la question de manière centré
-                Vector2 tailleTexte = _fontCase.MeasureString(question);
-                float positionCentree = (1600 - tailleTexte.X) / 2;
-                _spriteBatch.DrawString(_fontCase, question, new Vector2(positionCentree, 50), Color.Black);
-                
-                // Positionne les 4 réponses à la carte piochée
-                List<ElementInteractif> elementReponses = new List<ElementInteractif>
+                // POSITIONNEMENT ET SURVEILLANCE DES REPONSES
+                if (joueurAJouer.JokerActif.getNom().Equals("50/50"))
                 {
-                    new ElementInteractif(new Rectangle(120, 200, 600, 200), Color.White, _partie.CartePiochee.Reponses[0].Texte),
-                    new ElementInteractif(new Rectangle(820, 200, 600, 200), Color.White, _partie.CartePiochee.Reponses[1].Texte),
-                    new ElementInteractif(new Rectangle(120, 500, 600, 200), Color.White, _partie.CartePiochee.Reponses[2].Texte),
-                    new ElementInteractif(new Rectangle(820, 500, 600, 200), Color.White, _partie.CartePiochee.Reponses[3].Texte)
-                };
-                
+                    List<Reponse> reponses5050 = joueurAJouer.JokerActif.Jouer5050(_partie.CartePiochee);
+                    elementReponses.Add(new ElementInteractif(new Rectangle(20, 200, 450, 200), Color.White, reponses5050[0].Texte)); 
+                    elementReponses.Add(new ElementInteractif(new Rectangle(600, 200, 450, 200), Color.White, reponses5050[1].Texte));
+                }
+                else if (joueurAJouer.JokerActif.getNom().Equals("Relance de question"))
+                {
+                    elementReponses.Add(new ElementInteractif(new Rectangle(20, 200, 450, 200), Color.White, _partie.CartePiochee.Reponses[0].Texte)); 
+                    elementReponses.Add(new ElementInteractif(new Rectangle(600, 200, 450, 200), Color.White, _partie.CartePiochee.Reponses[1].Texte));
+                    elementReponses.Add(new ElementInteractif(new Rectangle(20, 500, 450, 200), Color.White, _partie.CartePiochee.Reponses[2].Texte));
+                    elementReponses.Add(new ElementInteractif(new Rectangle(600, 500, 450, 200), Color.White, _partie.CartePiochee.Reponses[3].Texte));
+                }
+                else
+                {
+                    jokersJoueur = joueurAJouer.GetJokers().GroupBy(j => j.getNom()).Select(group => group.First()).ToList();
+                    
+                    elementReponses.Add(new ElementInteractif(new Rectangle(20, 200, 450, 200), Color.White, _partie.CartePiochee.Reponses[0].Texte)); 
+                    elementReponses.Add(new ElementInteractif(new Rectangle(600, 200, 450, 200), Color.White, _partie.CartePiochee.Reponses[1].Texte));
+                    elementReponses.Add(new ElementInteractif(new Rectangle(20, 500, 450, 200), Color.White, _partie.CartePiochee.Reponses[2].Texte));
+                    elementReponses.Add(new ElementInteractif(new Rectangle(600, 500, 450, 200), Color.White, _partie.CartePiochee.Reponses[3].Texte));
+                }
+
                 foreach (ElementInteractif reponse in elementReponses)
                 {
                     reponse.Draw(_spriteBatch, _textureCase, _fontCase, Color.Black);
@@ -1162,6 +1323,33 @@ new Carte(nature,
                     }
                 }
                 
+                // POSITIONNEMENT ET SURVEILLANCE DES JOKERS
+                // Recupere une seule instance de chaque joker différent
+                
+                if (jokersJoueur.Count == 1)
+                {
+                    elementsJokers.Add(new ElementInteractif(new Rectangle(1200, 200, 300, 150), Color.White, jokersJoueur[0].getNom()));
+                }
+                else if(jokersJoueur.Count == 2)
+                {
+                    elementsJokers.Add(new ElementInteractif(new Rectangle(1120, 200, 200, 100), Color.White, jokersJoueur[0].getNom()));
+                    elementsJokers.Add(new ElementInteractif(new Rectangle(1390, 200, 200, 100), Color.White, jokersJoueur[1].getNom()));
+                }
+
+                foreach (ElementInteractif elementJoker in elementsJokers)
+                {
+                    elementJoker.Draw(_spriteBatch, _textureCase, _fontCase, Color.Black);
+                    if (joueurAJouer._Rect.Intersects(elementJoker.Rectangle))
+                    {
+                        // Place une indication au dessus du rectangle
+                        Vector2 messagePosition = new Vector2(
+                            elementJoker.Rectangle.X + (elementJoker.Rectangle.Width / 2) - (_fontCase.MeasureString("Appuyez sur ENTREE").X / 2),
+                            elementJoker.Rectangle.Y - 20
+                        );
+                        _spriteBatch.DrawString(_fontCase, "Appuyez sur ENTREE", messagePosition, Color.Black);
+                    }
+                }
+                
                 joueurAJouer.Draw(_spriteBatch);
                 break;
             
@@ -1169,6 +1357,13 @@ new Carte(nature,
                 break;
         }
         
+
+        // Affiche le message principal en haut de l'écran
+        float positionX = (_graphics.PreferredBackBufferWidth - _fontCase.MeasureString(_phrasePrincipale).X) / 2;
+        float positionY = 100;
+        Vector2 positionMessage = new Vector2(positionX, positionY);
+        _spriteBatch.DrawString(_fontCase, _phrasePrincipale, positionMessage, Color.Black);
+
         _spriteBatch.End();
 
         base.Draw(gameTime);
