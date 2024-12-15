@@ -13,15 +13,17 @@ public class Joueur : Sprite
     private Case _case;
     public int Score { get; private set; }
     private List <Joker> _jokers;
+    public Joker JokerActif { get; set; }
     public EtatJoueur Etat { get; set; }
 
-    public Joueur(string nom,Texture2D texture, Vector2 position, Case caseD) : base(texture, position,80)
+    public Joueur(string nom,Texture2D texture, Vector2 position, Case caseD) : base(texture, position,60)
     {
         _nom = nom; 
         _case = caseD; // case de départ
         Score = 0;
         _jokers = new List<Joker>();
         Etat = EtatJoueur.Normal;
+        JokerActif = new Joker("","");
     }
     
     public string GetNom()
@@ -57,7 +59,19 @@ public class Joueur : Sprite
     {
         return _position;
     }
+    
+    // Active le mode ChoixDifficulte du joueur
+    public void ActiverChoixDifficulte()
+    {
+        Etat = EtatJoueur.ChoixDifficulte;
+        SetPosition(new Vector2(900, 400));
+    }
 
+    public List<Joker> GetJokers()
+    {
+        return _jokers;
+    }
+    
     // Ajoute un joker à un joueur qu'il ne posséde pas encore
     public void AjouterRandomJoker()
     {
@@ -68,20 +82,15 @@ public class Joueur : Sprite
             new Joker("50/50", "Supprime deux mauvaises réponses lors d’une question à choix multiple."),
             new Joker("Relance de question", "Permet de changer la question actuelle par une autre du même thème.")
         };
-         // recupere un joker aléatoire
+        
+        // recupere un joker aléatoire
         Random rnd = new Random();
         Joker jokerAleatoire = typesDeJokers[rnd.Next(typesDeJokers.Count)];
-    }
-   
-    // Active le mode ChoixDifficulte du joueur
-    public void ActiverChoixDifficulte()
-    {
-        Etat = EtatJoueur.ChoixDifficulte;
-        SetPosition(new Vector2(900, 400));
+        _jokers.Add(jokerAleatoire);
     }
     
     // FAIRE UNE FONCTION JOUER JOKER
-    public void JouerJoker(Joker joker)
+    public void JouerJoker(Partie partie, Joker joker)
     {
         // Supprime le premier joker correspondant dans la liste des joker
         int i = 0;
@@ -89,15 +98,29 @@ public class Joueur : Sprite
         {
             i++;
         }
-        _jokers.Remove(_jokers[i]);
+
+        Console.WriteLine("Nom du joker: " + _jokers[i].getNom());
+        
+        if (_jokers[i].getNom().Equals("50/50"))
+        {
+            JokerActif = _jokers[i];
+            Console.WriteLine(JokerActif.getNom());
+            Console.WriteLine("je donne le 5050 en actif");
+        }
+        else if (_jokers[i].getNom().Equals("Relance de question"))
+        {
+            _jokers[i].JouerRelance(partie);
+            JokerActif = _jokers[i];
+        }
+        _jokers.Remove(_jokers[i]); // A DECOMMENTER
     }
-    
+
     
     // Si la réponse est juste augmente le score du joueur et change son état
     // Si le joueur a juste et qu'il était sur une case chance, le fait rejouer
-    public void JouerReponse(Reponse reponse)
+    public bool JouerReponse(Reponse reponse)
     {
-        Console.WriteLine(_nom + "joue la réponse");
+        Console.WriteLine(_nom + " joue la reponse");
         
         Etat = EtatJoueur.Normal;
         if (reponse.EstCorrecte)
@@ -106,8 +129,12 @@ public class Joueur : Sprite
             {
                 Etat = EtatJoueur.Rejouer;
             }
-            Console.WriteLine("Il réussi");
             Score++;
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 
