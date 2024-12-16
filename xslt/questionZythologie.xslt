@@ -14,43 +14,73 @@
                     body { font-family: Arial, sans-serif;
                     background-color: #f4f4f4;
                     padding: 20px; }
-                    .question { border: 1px solid #ddd;
-                    border-radius: 5px;
-                    background-color: #fff;
+                    
+                    table{ width: 100%;
+                    border-collapse: collapse;
                     margin-bottom: 20px;
-                    padding: 15px;
+                    background-color: #fff;
                     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); }
-                    .question .header { font-weight: bold;
-                    color: #333;
-                    margin-bottom: 10px; }
+                    
+                    th, td{ border: 1px solid #ddd;
+                    padding: 10px;
+                    text-align: left;}
+                    
+                    th{ background-color: #ffcc5c;
+                    color: white;}
+                    
+                    tr:nth-child(even){ background-color: #f9f9f9;}
+                    
                 </style>
             </head>
             <body>
                 <h1>Questions du thème : <xsl:value-of select="$theme"/></h1>
-                <xsl:apply-templates select="tp:Categorie[@nom=$theme]/tp:Cartes/tp:Carte"/>
+                <table>
+                    <tr>
+                        <th>ID</th>
+                        <th>Difficulté</th>
+                        <th>Question</th>
+                        <th>Réponses</th>
+                    </tr>
+                    <xsl:apply-templates select="tp:Categorie[@nom=$theme]/tp:Cartes/tp:Carte"/>
+                </table>
             </body>
         </html>
     </xsl:template>
 
     <xsl:template match="tp:Carte">
-        <div class="question">
-            <div class="header">
-                Difficulté : <xsl:value-of select="@difficulte"/>
-            </div>
-            <div class="content">
-                <p><strong>Question :</strong> <xsl:value-of select="tp:Question"/></p>
-                <h4>Réponses :</h4>
+        <tr>
+            <td><xsl:value-of select="@id"/></td>
+            <td><xsl:value-of select="@difficulte"/></td>
+            <td><xsl:value-of select="tp:Question"/></td>
+            <td>
                 <ul>
-                    <xsl:for-each select="tp:Reponses/tp:Reponse">
-                        <li>
-                            <xsl:value-of select="@texte"/>
-                            <xsl:if test="@correct='true'">
-                                <strong> (Correct)</strong>
-                            </xsl:if>
-                        </li>
-                    </xsl:for-each>
+                    <li>
+                        <xsl:value-of select="tp:Reponses/tp:Reponse[1]/@texte"/>
+                        <xsl:if test="tp:Reponses/tp:Reponse[1]/@correct='true'">
+                            <strong>(Correct)</strong>
+                        </xsl:if>
+                    </li>
+                    <li>
+                        <xsl:value-of select="tp:Reponses/tp:Reponse[2]/@texte"/>
+                        <xsl:if test="tp:Reponses/tp:Reponse[2]/@correct='true'">
+                            <strong>(Correct)</strong>
+                        </xsl:if>
+                    </li>
+                    <li>
+                        <xsl:value-of select="tp:Reponses/tp:Reponse[3]/@texte"/>
+                        <xsl:if test="tp:Reponses/tp:Reponse[3]/@correct='true'">
+                            <strong>(Correct)</strong>
+                        </xsl:if>
+                    </li>
+                    <li>
+                        <xsl:value-of select="tp:Reponses/tp:Reponse[4]/@texte"/>
+                        <xsl:if test="tp:Reponses/tp:Reponse[4]/@correct='true'">
+                            <strong>(Correct)</strong>
+                        </xsl:if>
+                    </li>
                 </ul>
-            </div>
-        </div>
+            </td>
+        </tr>
+        
     </xsl:template>
 </xsl:stylesheet>
