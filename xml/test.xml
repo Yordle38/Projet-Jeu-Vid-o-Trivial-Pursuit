@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Case xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" type="VIDE" couleur="ROUGE">
-  <Sprite texture="texture1" positionX="4" PositionY="5" size="7" />
-</Case>
